@@ -1,0 +1,6 @@
+{
+  "name": "Baseera AI",
+  "description": "مساعد ذكي يرافقك في الخلفية ويظهر فوق التطبيقات ليتحاور معك بالصوت والكتابة ويحلل شاشتك لمساعدتك فورياً.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
