@@ -1,27 +1,41 @@
-name: Download and Save Artifact
+name: Ultimate 2-Hour Stream Recorder
 
 on:
   workflow_dispatch:
 
 jobs:
-  build:
+  record:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Install FFmpeg
-        run: sudo apt update && sudo apt install -y ffmpeg
-
-      - name: Download Stream
+      - name: Prepare Environment
         run: |
-          ffmpeg -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
-          -i "http://vod4k.cc:80/live/3143164151388361/9939196754/459404.ts" \
-          -t 4800 -c copy max3put.ts
+          sudo apt update
+          sudo apt install -y ffmpeg python3-pip
+          pip3 install streamlink
 
-      - name: Upload Artifact
+      - name: Record Stream (2 Hours)
+        run: |
+          # التسجيل باستخدام streamlink لضمان الترتيب الدقيق للقطع
+          # --hls-segment-threads: تضمن تحميل القطع بدون ضياع
+          # --duration 7200: لساعتين كاملتين
+          streamlink --hls-live-restart \
+                     --hls-segment-threads 4 \
+                     --hls-live-edge 3 \
+                     --duration 7200 \
+                     "hls://http://9ntjn2.dynu.net/live/Alfonsocastilejo0316/pKXPKBKqpw/275111.m3u8" \
+                     best -o raw_stream.ts
+
+      - name: Clean and Fix Timestamps
+        run: |
+          # التنظيف العميق: إعادة كتابة الملف لإصلاح أي قفزات زمنية (Glitches)
+          # -fflags +genpts: يعيد بناء التوقيت لضمان عدم وجود رمش
+          # -bsf:v h264_mp4toannexb: يضمن توافق الفيديو مع المعايير الدولية
+          ffmpeg -i raw_stream.ts -c copy -fflags +genpts -bsf:v h264_mp4toannexb -f mpegts -y clean_video.ts
+
+      - name: Store Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: recorded-video
-          path: max3put.ts
+          name: Clean-Recording-2Hours
+          path: clean_video.ts
+          retention-days: 1 # يمكنك تغيير عدد أيام الاحتفاظ بالملف
           
