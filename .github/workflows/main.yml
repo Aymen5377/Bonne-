@@ -14,17 +14,18 @@ jobs:
 
       - name: Record Stream (2 Hours)
         run: |
-          # استخدام ffmpeg مباشرة مع ضبط التوقيت وإعادة الاتصال
-          # -t 7200: تعني ساعتين (3600 ثانية * 2)
-          # -user_agent: لمحاكاة متصفح عادي
+          # نستخدم -re لتقليل سرعة التحميل ومحاكاة "المشاهدة الطبيعية" لتجنب خطأ 509
+          # الـ Headers و User-Agent ضرورية لتجنب خطأ 403
           ffmpeg -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
-          -user_agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36" \
+          -headers "Referer: http://9ntjn2.dynu.net/\r\nOrigin: http://9ntjn2.dynu.net/\r\n" \
+          -user_agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
+          -re \
           -i "http://9ntjn2.dynu.net/live/Alfonsocastilejo0316/pKXPKBKqpw/275111.m3u8" \
-          -t 6000 -c copy -map 0 -y raw_stream.ts
+          -t 7200 -c copy -map 0 -y raw_stream.ts
 
       - name: Clean and Fix Timestamps
         run: |
-          # التنظيف النهائي
+          # التنظيف النهائي للملف لضمان خلوه من أي تقطيع أو رمش
           ffmpeg -i raw_stream.ts -c copy -fflags +genpts -bsf:v h264_mp4toannexb -f mpegts -y clean_video.ts
 
       - name: Store Artifact
@@ -32,4 +33,5 @@ jobs:
         with:
           name: Clean-Recording-2Hours
           path: clean_video.ts
+          retention-days: 1
           
